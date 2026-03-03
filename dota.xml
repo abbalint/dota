@@ -1,0 +1,7 @@
+<?xml version = "1.0" encoding = "UTF-8"?>
+<mapinfo details = "" imagepath = "Art\units\trains\train_portrait" displayName = "   dota" cannotReplace = ""
+         loadDetails="" loadBackground="Art\ui\history\civilians\C_S_Train_Engine">
+   <loadss>Art\ui\history\geography\G_R_Train_Passenger Car</loadss>
+   <loadss>Art\ui\history\civilians\C_S_Train_Passenger Car</loadss>
+   <loadss>Art\ui\history\civilians\C_S_Train_Freight Car</loadss>
+</mapinfo>
