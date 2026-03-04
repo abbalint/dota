@@ -339,6 +339,7 @@ void main(void) {
 	Z("int move_action=-1;");
 	Z("int move_range=-1;");
 	
+	Z("int respawn=-1;");
 	Z("int keys=-1;");
 	Z("int lastattack=-1;");
 	Z("int note=-1;");
@@ -870,6 +871,7 @@ void main(void) {
 	Z(" magicresistance=xsArrayCreateFloat(cNumberPlayers,0,\"\");");
 	Z(" misschance=xsArrayCreateFloat(cNumberPlayers,0,\"\");");
 	Z(" radiant_creeppos=xsArrayCreateVector(1000,cOriginVector,\"\");");
+	Z(" respawn=xsArrayCreateInt(cNumberPlayers,-1,\"\");");
 
 	Z(" picked=xsArrayCreateInt(cNumberPlayers,-1,\"\");");
 	
@@ -1194,8 +1196,51 @@ void main(void) {
 	Z(" }");
 
 	//counter
-	Z(" trCounterAbort(\"ok\");");
-	Z(" trCounterAddTime(\"ok\",trTimeMS()/1000,-1,\"0:0\",-1);");
+	Z(" for(i=1;<cNumberPlayers) {");
+	Z("  if(xsArrayGetInt(respawn,i)==-1) {");
+	Z("   trUnitSelectClear();");
+	Z("   trUnitSelectByID("+firsthero+"+(i-1));");
+	Z("   if(trUnitDead()) { ");
+	Z("    xsArraySetInt(respawn,i,trTimeMS());");
+	Z("    trUnitSelectClear();");
+	Z("    trUnitSelectByID("+firsthero+"+(i-1));");
+	Z("    trUnitChangeProtoUnit(\"SPCJohn\");");
+	Z("    healunit("+firsthero+"+(i-1),100);");
+	Z("   }");
+	Z("  }");
+	Z("  else {");
+	Z("   if(100+xsArrayGetInt(respawn,i)<trTimeMS()) {");
+	Z("    trUnitSelectClear();");
+	Z("    trUnitSelectByID("+firsthero+"+(i-1));");
+	Z("    trUnitChangeProtoUnit(\"CinematicBlock\");");
+	Z("   }");
+	Z("   if(60000+xsArrayGetInt(respawn,i)<trTimeMS()) {");
+	Z("    xsArraySetInt(respawn,i,-1);");
+	Z("    trUnitSelectClear();");
+	Z("    trUnitSelectByID("+firstteleport+"+(i-1));");
+	Z("    trUnitChangeProtoUnit(\"Galleon\");");
+	Z("    trUnitSelectClear();");
+	Z("    trUnitSelectByID("+firsthero+"+(i-1));");
+	Z("    trUnitChangeProtoUnit(\"Musketeer\");");
+	Z("    trImmediateUnitGarrison(\"\"+("+firstteleport+"+i-1));");
+	Z("    trUnitChangeProtoUnit(xsArrayGetString(heroes,xsArrayGetInt(picked,i)));");
+	Z("    trUnitSelectClear();");
+	Z("    trUnitSelectByID("+firstteleport+"+(i-1));");
+	Z("    trUnitChangeProtoUnit(\"CinematicBlock\");");
+	Z("   }");
+	Z("  }");
+	Z(" }");
+	
+	Z(" if(xsArrayGetInt(respawn,trCurrentPlayer())==-1) {");
+	Z("  trCounterAbort(\"ok\");");
+	Z("  trCounterAddTime(\"ok\",trTimeMS()/1000,-1,\"0:0\",-1);");
+	Z(" }");
+	Z(" else {");
+	Z("  trCounterAbort(\"ok\");");
+	Z("  trCounterAddTime(\"ok\",(60000+xsArrayGetInt(respawn,trCurrentPlayer())-trTimeMS())/1000,-1,");
+	Z("    \"0:0 respawn in\",-1);");
+
+	Z(" }");
 	
 	//stun
 	Z("for(i=0;<=CC_size) {");
