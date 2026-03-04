@@ -207,8 +207,9 @@ void main(void) {
 	}
 	
 	for(i=1;<cNumberPlayers){
-		rmPlaceObjectDefAtLoc(0,i,rmPlayerLocXFraction(i)-rmXMetersToFraction(5),rmPlayerLocZFraction(i),1);
-		rmAddUnitsToArmy(i,0,0);
+		for(j=0;<160) {
+			rmPlaceObjectDefAtLoc(0,i,rmPlayerLocXFraction(i)-rmXMetersToFraction(5),rmPlayerLocZFraction(i),1);
+		}
 	}
 	int firsthero=rmGetUnitPlaced(0,0);
 	for(i=1;<cNumberPlayers){
@@ -315,6 +316,7 @@ void main(void) {
 	Z("int x_item=-1;");
 	Z("int y_amount=-1;");
 	Z("int x_amount=-1;");
+	Z("int heroid=-1;");
 
 	
 	Z("int gold=-1;");
@@ -362,12 +364,12 @@ void main(void) {
 	Z("int heroes_portrait=-1;");
 	Z("int heroes_desc=-1;");
 	// ---- spells -----
-	Z("const int STORMHAMMER=0;");
-	Z("const int PASSIVEHP=1;");
-	Z("const int PASSIVECLEAVE=2;");
-	Z("const int HEAL=3;");
-	Z("const int STUN10SEC=4;");
-	Z("const int MAMELUKE_DEATH_CIRCLE=5;");
+	Z("const int STORMHAMMER=1;");
+	Z("const int PASSIVEHP=2;");
+	Z("const int PASSIVECLEAVE=3;");
+	Z("const int HEAL=4;");
+	Z("const int STUN10SEC=5;");
+	Z("const int MAMELUKE_DEATH_CIRCLE=6;");
 	// ----- items -----
 	Z("const int BUYWARD=70;");
 	Z("const int USEWARD=71;");
@@ -474,7 +476,7 @@ void main(void) {
 	Z(" bool deny=false;");
 	Z(" bool hero=false;");
 	Z(" trUnitSelectClear();");
-	Z(" trUnitSelectByID("+(firsthero)+"+trCurrentPlayer()-1);");
+	Z(" trUnitSelectByID("+firsthero+"+((trCurrentPlayer()-1)*160+xsArrayGetInt(heroid,trCurrentPlayer())));");
 	Z(" if(trUnitIsSelected()) {");
 	Z("  hero=true;");
 	Z(" }");
@@ -503,13 +505,15 @@ void main(void) {
 	Z("  kbUnitQueryDestroy(q);");	
 	Z(" if(hero==true) {");
 	Z("  saveCamera(\"tempcamera\");");
-	Z("  uiLookAtAndSelectUnit("+(firsthero)+"+trCurrentPlayer()-1);");
+	Z("  uiLookAtAndSelectUnit("+firsthero+"+");
+	Z("   ((trCurrentPlayer()-1)*160+xsArrayGetInt(heroid,trCurrentPlayer())));");
 	Z("  loadCamera(\"tempcamera\");");
 	Z("  ");
 	Z(" }");
 	Z(" if(deny==false) {");
 	Z("  uiWorkAtPointer();");
-	Z("  if(kbUnitGetActionType("+(firsthero)+"+trCurrentPlayer()-1)==15)");
+	Z("  if(kbUnitGetActionType("+firsthero+"+");
+	Z("   ((trCurrentPlayer()-1)*160+xsArrayGetInt(heroid,trCurrentPlayer())))==15)");
 	Z("   trChatSendToPlayer(0,-1,\"ok\");");
 	Z(" }");
 	Z(" }");
@@ -668,7 +672,10 @@ void main(void) {
 	Z("void healunit(int number=0,float y=0) {");
 	Z("trUnitSelectClear();");
 	Z("trUnitSelectByID(number);");
+	Z(" xsSetContextPlayer(0);");
 	Z("int p=kbUnitGetPlayerID(number);");
+	Z(" xsSetContextPlayer(0);");
+	Z("trUnitConvert(0);");
 	//Z("xsSetContextPlayer(p);");
 	Z("float x=0;");
 	Z("if(kbUnitGetCurrentHitpoints(number)==kbUnitGetMaximumHitpoints(number)) {");
@@ -678,11 +685,16 @@ void main(void) {
 	Z(" x=100000000;");
 	Z("}");
 	Z("else {");
-	Z(" x=((-1.0)*kbUnitGetMaximumHitpoints(number))*y/(kbUnitGetCurrentHitpoints(number) -");
-	Z("	 kbUnitGetMaximumHitpoints(number) + y);");
+	Z(" float temp=(kbUnitGetCurrentHitpoints(number) -kbUnitGetMaximumHitpoints(number) + y);");
+	Z(" if(temp==0) temp=0.01;");
+	Z(" x=((-1.0)*kbUnitGetMaximumHitpoints(number))*y/temp;");
 	Z("}");
+	Z(" trChatSendToPlayer(0,-1,\"x: \"+x);");
+	Z(" trChatSendToPlayer(0,-1,\"curr: \"+kbUnitGetCurrentHitpoints(number));");
+	Z(" trChatSendToPlayer(0,-1,\"max: \"+kbUnitGetMaximumHitpoints(number));");
+	Z(" trChatSendToPlayer(0,-1,\"y: \"+y);");
 	Z("if(x!=0) {");
-	Z("trUnitConvert(0);");
+	
 	Z(" trModifyProtounit(kbGetProtoUnitName(kbGetUnitBaseTypeID(number)), 0, 0, x);");
 	Z(" trUnitConvert(p);");
 	Z(" trModifyProtounit(kbGetProtoUnitName(kbGetUnitBaseTypeID(number)), 0, 0, (-1.0)*x);");
@@ -872,6 +884,7 @@ void main(void) {
 	Z(" misschance=xsArrayCreateFloat(cNumberPlayers,0,\"\");");
 	Z(" radiant_creeppos=xsArrayCreateVector(1000,cOriginVector,\"\");");
 	Z(" respawn=xsArrayCreateInt(cNumberPlayers,-1,\"\");");
+	Z(" heroid=xsArrayCreateInt(cNumberPlayers,0,\"\");");
 
 	Z(" picked=xsArrayCreateInt(cNumberPlayers,-1,\"\");");
 	
@@ -885,6 +898,7 @@ void main(void) {
 	Z("   xsArraySetInt(bitsv2,8*(i-1)+bit,"+firstbit+"+((cNumberPlayers-1)*32)+bit+(i-1)*8);");
 	Z("  }");
 	Z(" }");
+	
 	
 	Z(" for(i=2;<cNumberPlayers) {");
 	Z("  if(kbGetPlayerTeam(i)!=kbGetPlayerTeam(1)) {");
@@ -905,7 +919,6 @@ void main(void) {
 	//Z(" trModifyProtounit(\"Outpost\", i, 16, 1000000.0);");
 	Z(" }");
 	Z(" for(i=1;<cNumberPlayers) {");
-	Z("  trCreateDefendPlan(\"\"+i+\",0\",\"plan\"+i,200,0,200,0,0.2,0);");
 	Z("  trPlayerSetHCAccess(i,false);");
 	Z(" }");
 	//Z(" trUnitSelectClear();");
@@ -928,7 +941,7 @@ void main(void) {
 	Z("	  \"The Computer will guide you throgh the most important points of the game.\");");
 	Z(" }");
 	Z(" trUnitSelectClear();");
-	Z(" trUnitSelectByID("+(firsthero)+"+1-1);");
+	Z(" trUnitSelectByID("+firsthero+"+((i-1)*160+xsArrayGetInt(heroid,i)));");
 	//hosting the game with sandbox difficulty, no handicap and in singleplayer mode enables the tutorial.
 	
 	Z(" keys=xsArrayCreateString(200,\"\",\"\");");
@@ -1045,8 +1058,7 @@ void main(void) {
 	Z("}");
 
 
-	Z(" trModifyProtounit(\"HouseMed\",1,4,-9000); ");
-	Z(" trModifyProtounit(\"HouseMed\",1,16,-100);");
+
 	Z(" xsDisableSelf();");
 	Z("}");
 	
@@ -1078,6 +1090,7 @@ void main(void) {
 	Z("   trArmySelectInt(j,1);");
 	Z("   if(trUnitDead()) continue;");
 	Z("   if(trUnitDistanceToUnitID(hero)<2) {");
+	Z("    trUnitChangeProtoUnit(\"CinematicBlock\");");
 	Z("    trUnitDelete(true);");
 	Z("    trUnitSelectClear();");
 	Z("    trUnitSelectByID(hero);");
@@ -1093,7 +1106,7 @@ void main(void) {
 	Z("  if(xsArrayGetInt(picked,j)==-1) {");
 	Z("   int count=0;");
 	Z("   for(i=1;<cNumberPlayers) if(xsArrayGetInt(picked,i)!=-1) count++;");
-	Z("   trQuestVarSetFromRand(\"pick\",1,9-count,true);");
+	Z("   trQuestVarSetFromRand(\"pick\",1,8-count,true);");
 	Z("   for(i=1;<9) {");
 	Z("    bool taken=false;");
 	Z("    for(k=1;<cNumberPlayers) {");
@@ -1107,6 +1120,10 @@ void main(void) {
 	Z("     trUnitSelectClear();");
 	Z("     trArmySelectInt(0,i);");
 	Z("     trUnitConvert(j);");
+	Z("     trUnitSelectClear();");
+	Z("     trArmySelect(\"\"+j+\",1\");");
+	Z("     trUnitChangeProtoUnit(\"CinematicBlock\");");
+	Z("     trUnitDelete(true);");
 	Z("     trChatSendToPlayer(0,-1,\"Player \"+j+\" did not pick, randomized \"+xsArrayGetString(heroes_names,i)+");
 	Z("      \" <icon=(20)(\"+xsArrayGetString(heroes_portrait,i)+\")>\");");
 	Z("     xsArraySetInt(picked,j,i);");
@@ -1121,11 +1138,13 @@ void main(void) {
 	Z(" gadgetToggle(\"AGameMinimap\");");
 	Z(" for(i=1;<cNumberPlayers) {");
 	Z("  trUnitSelectClear();");
-	Z("  trUnitSelectByID("+firsthero+"+i-1);");
+	Z("  trUnitSelectByID("+firsthero+"+((i-1)*160+xsArrayGetInt(heroid,i)));");
 	Z("  trUnitChangeProtoUnit(xsArrayGetString(heroes,xsArrayGetInt(picked,i)));");
+	Z("  trUnitMoveToPoint(200,0,200,-1,true);");
 	Z("  trUnitSelectClear();");
 	Z("  trArmySelectInt(0,i);");
 	Z("  trUnitDelete(true);");
+
 	Z(" }");
 	
 	Z(" map(\"mouse2down\",\"root\",\" trackInsert(); trackAddWaypoint();trackPlay(-1,10003);\");");
@@ -1159,20 +1178,20 @@ void main(void) {
 	Z("  xsSetContextPlayer(i);");
 	//after deny you have to wait to attack again
 	Z("    trUnitSelectClear();");
-	Z("    trUnitSelectByID("+(firsthero)+"+i-1);");
+	Z("    trUnitSelectByID("+firsthero+"+((i-1)*160+xsArrayGetInt(heroid,i)));");
 	Z("    trUnitCinematicRemoveControlAction();");
-	Z("  if((kbUnitGetActionType("+(firsthero)+"+i-1)==15)&&(xsArrayGetInt(lastattack,i)+6000<trTimeMS())){");
+	Z("  if((kbUnitGetActionType("+firsthero+"+((i-1)*160+xsArrayGetInt(heroid,i)))==15)&&(xsArrayGetInt(lastattack,i)+6000<trTimeMS())){");
 	Z("	  xsArraySetInt(lastattack,i,trTimeMS());");
 	
 	Z("  }");
 	Z("  if((xsArrayGetInt(lastattack,i)+6000>trTimeMS())&&(xsArrayGetInt(lastattack,i)+500<trTimeMS())) {");
-	Z("   if(kbUnitGetActionType("+(firsthero)+"+i-1)!=9) {");
+	Z("   if(kbUnitGetActionType("+firsthero+"+((i-1)*160+xsArrayGetInt(heroid,i)))!=9) {");
 	Z("    trUnitSelectClear();");
-	Z("    trUnitSelectByID("+(firsthero)+"+i-1);");
-	Z("    vector pos=kbUnitGetPosition("+(firsthero)+"+i-1);");
+	Z("    trUnitSelectByID("+firsthero+"+((i-1)*160+xsArrayGetInt(heroid,i)));");
+	Z("    vector pos=kbUnitGetPosition("+firsthero+"+((i-1)*160+xsArrayGetInt(heroid,i)));");
 	Z("    trUnitSetStance(\"StandGround\");");
 	//Z("    trUnitMoveToPoint(xsVectorGetX(pos)+0.1,xsVectorGetY(pos),xsVectorGetZ(pos),-1,false);");
-	Z("    uiLookAtAndSelectUnit("+(firsthero)+"+i-1);");
+	Z("    uiLookAtAndSelectUnit("+firsthero+"+((i-1)*160+xsArrayGetInt(heroid,i)));");
 	//Z("    uiStopSelectedUnits();");
 	Z("   }");
 	Z("  }");
@@ -1194,39 +1213,26 @@ void main(void) {
 	Z("  map(\"b\",\"root\",\"\");");
 	Z("  xsArraySetBool(note,trCurrentPlayer(),false);");
 	Z(" }");
-
-	//counter
+	
+	//counter +respawn
 	Z(" for(i=1;<cNumberPlayers) {");
 	Z("  if(xsArrayGetInt(respawn,i)==-1) {");
 	Z("   trUnitSelectClear();");
-	Z("   trUnitSelectByID("+firsthero+"+(i-1));");
+	Z("   trUnitSelectByID("+firsthero+"+((i-1)*160+xsArrayGetInt(heroid,i)));");
 	Z("   if(trUnitDead()) { ");
+	Z("    trUnitChangeProtoUnit(\"CinematicBlock\");");
 	Z("    xsArraySetInt(respawn,i,trTimeMS());");
-	Z("    trUnitSelectClear();");
-	Z("    trUnitSelectByID("+firsthero+"+(i-1));");
-	Z("    trUnitChangeProtoUnit(\"SPCJohn\");");
-	Z("    healunit("+firsthero+"+(i-1),100);");
 	Z("   }");
 	Z("  }");
 	Z("  else {");
-	Z("   if(100+xsArrayGetInt(respawn,i)<trTimeMS()) {");
-	Z("    trUnitSelectClear();");
-	Z("    trUnitSelectByID("+firsthero+"+(i-1));");
-	Z("    trUnitChangeProtoUnit(\"CinematicBlock\");");
-	Z("   }");
 	Z("   if(60000+xsArrayGetInt(respawn,i)<trTimeMS()) {");
 	Z("    xsArraySetInt(respawn,i,-1);");
+	Z("    xsArraySetInt(heroid,i,xsArrayGetInt(heroid,i)+1);");
+
 	Z("    trUnitSelectClear();");
-	Z("    trUnitSelectByID("+firstteleport+"+(i-1));");
-	Z("    trUnitChangeProtoUnit(\"Galleon\");");
-	Z("    trUnitSelectClear();");
-	Z("    trUnitSelectByID("+firsthero+"+(i-1));");
-	Z("    trUnitChangeProtoUnit(\"Musketeer\");");
-	Z("    trImmediateUnitGarrison(\"\"+("+firstteleport+"+i-1));");
+	Z("    trUnitSelectByID("+firsthero+"+((i-1)*160+xsArrayGetInt(heroid,i)));");
 	Z("    trUnitChangeProtoUnit(xsArrayGetString(heroes,xsArrayGetInt(picked,i)));");
-	Z("    trUnitSelectClear();");
-	Z("    trUnitSelectByID("+firstteleport+"+(i-1));");
-	Z("    trUnitChangeProtoUnit(\"CinematicBlock\");");
+	Z("    trUnitMoveToPoint(200,0,200,-1,true);");
 	Z("   }");
 	Z("  }");
 	Z(" }");
@@ -1280,7 +1286,7 @@ void main(void) {
 	Z(" for(i=1;<cNumberPlayers) {");
 	//handle move action
 	Z("   if(xsArrayGetInt(move_action,i)!=-1) {");
-	Z("    vector pposs=kbGetBlockPosition(\"\"+("+firsthero+"+(i-1)));");
+	Z("    vector pposs=kbGetBlockPosition(\"\"+("+firsthero+"+((i-1)*160+xsArrayGetInt(heroid,i))));");
 	Z("    if(xsVectorLength(pposs-xsArrayGetVector(move_to,i))<xsArrayGetInt(move_range,i)) {");
 	Z("     trUnitSelectClear();");
 	Z("     trUnitSelectByID(("+firsthero+"+(i-1)));");
@@ -1346,7 +1352,7 @@ void main(void) {
 	Z("    }");
 	Z("   }");
 	Z("}");
-	Z("trSetCinematicUnitSpeaking(\""+firsthero+"\",false,1);");
+	Z("trSetCinematicUnitSpeaking(\"\"+("+firsthero+"+((i-1)*160+xsArrayGetInt(heroid,i))),false,1);");
 	
 	
 	//1 sec timer
@@ -1533,7 +1539,7 @@ void main(void) {
 	Z("     xsArraySetInt(move_range,i,10);");
 	
 	Z("     trUnitSelectClear();");
-	Z("     trUnitSelectByID(("+firsthero+"+(i-1)));");
+	Z("     trUnitSelectByID("+firsthero+"+((i-1)*160+xsArrayGetInt(heroid,i)));");
 	Z("     trUnitMoveToPoint(xsVectorGetX(posss),0,xsVectorGetZ(posss),-1,false);");
 	
 	Z("     trUnitSelectClear();");
@@ -1562,7 +1568,7 @@ void main(void) {
 	Z("     xsArraySetInt(move_range,i,10);");
 	
 	Z("     trUnitSelectClear();");
-	Z("     trUnitSelectByID(("+firsthero+"+(i-1)));");
+	Z("     trUnitSelectByID("+firsthero+"+((i-1)*160+xsArrayGetInt(heroid,i)));");
 	Z("     trUnitMoveToPoint(xsVectorGetX(possss),0,xsVectorGetZ(possss),-1,false);");
 	
 	Z("     trUnitSelectClear();");
@@ -1603,7 +1609,8 @@ void main(void) {
 	Z(" if(xsArrayGetBool(radiant_dead_creeps,i) && trUnitDead()) {");
 	Z("  trChatSendToPlayer(0,-1,\"dead\");");
 	Z("  for(j=1;<cNumberPlayers) {");
-	Z("   if(xsVectorLength(xsArrayGetVector(radiant_creeppos,i)-kbUnitGetPosition("+(firsthero)+"+j-1))<20) {");
+	Z("   if(xsVectorLength(xsArrayGetVector(radiant_creeppos,i)-");
+	Z(     "kbUnitGetPosition("+firsthero+"+((i-1)*160+xsArrayGetInt(heroid,i))))<20) {");
 	Z("    xsArraySetInt(exp,j,xsArrayGetInt(exp,j)+100);");
 	Z("   }");
 	Z("  }");
@@ -1634,6 +1641,7 @@ void main(void) {
 	Z(" }");
 	*/
 	//aura test
+	/*
 	Z(" if(auratimer+2000<trTimeMS()) {");
 	Z("  xsSetContextPlayer(1);");
 	Z("  kbLookAtAllUnitsOnMap();");
@@ -1653,7 +1661,7 @@ void main(void) {
 	Z("  }");
 	Z("  kbUnitQueryDestroy(q);");
 	Z("  auratimer=trTimeMS();");
-	Z(" }");
+	Z(" }");*/
 	//spawn creeps
 	
 	Z(" for(team=0;<=1) {");
