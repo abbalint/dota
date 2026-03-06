@@ -317,7 +317,9 @@ void main(void) {
 	Z("int y_amount=-1;");
 	Z("int x_amount=-1;");
 	Z("int heroid=-1;");
-
+	Z("int attacker=-1;");
+	Z("int attacker_time=-1;");
+	Z("int save_command=-1;");
 	
 	Z("int gold=-1;");
 	Z("int kills=-1;");
@@ -370,6 +372,8 @@ void main(void) {
 	Z("const int HEAL=4;");
 	Z("const int STUN10SEC=5;");
 	Z("const int MAMELUKE_DEATH_CIRCLE=6;");
+	Z("const int NUKE=7;");
+	Z("const int BLINK=8;");
 	// ----- items -----
 	Z("const int BUYWARD=70;");
 	Z("const int USEWARD=71;");
@@ -629,6 +633,10 @@ void main(void) {
 	Z("  specialPower(trCurrentPlayer(),3,11);");
 	Z("  map(\"mouse1down\",\"root\",\" trackInsert();trackAddWaypoint();trackPlay(-1,\"+MAMELUKE_DEATH_CIRCLE+\");\");");
 	Z(" }");
+	Z(" if(id==BLINK) {");
+	Z("  specialPower(trCurrentPlayer(),3,11);");
+	Z("  map(\"mouse1down\",\"root\",\" trackInsert();trackAddWaypoint();trackPlay(-1,\"+BLINK+\");\");");
+	Z(" }");
 	Z("}");
 	
 	Z("void key_use(int id=-1) {");
@@ -647,6 +655,12 @@ void main(void) {
 	Z(" if(id==MAMELUKE_DEATH_CIRCLE) {");
 	Z("  useballoon();");
 	Z("  docommand(MAMELUKE_DEATH_CIRCLE);");
+	Z("  editMode(\"None\");");
+	Z("  map(\"mouse1down\",\"root\",\" trackInsert(); trackAddWaypoint();trackPlay(-1,\"+(10004)+\");\");");
+	Z(" }");
+	Z(" if(id==BLINK) {");
+	Z("  useballoon();");
+	Z("  docommand(BLINK);");
 	Z("  editMode(\"None\");");
 	Z("  map(\"mouse1down\",\"root\",\" trackInsert(); trackAddWaypoint();trackPlay(-1,\"+(10004)+\");\");");
 	Z(" }");
@@ -792,15 +806,17 @@ void main(void) {
 	Z(" xsArraySetInt(mana_cost,STUN10SEC,100);");
 	Z(" xsArraySetInt(heroes_w,2,PASSIVEHP);");
 	Z(" xsArraySetInt(heroes_e,2,PASSIVECLEAVE);");
-	Z(" xsArraySetInt(heroes_r,2,HEAL);");
+	Z(" xsArraySetInt(heroes_r,2,NUKE);");
 	
 	Z(" xsArraySetString(heroes,3,\"Strelet\");");
 	Z(" xsArraySetString(heroes_names,3,\"Strelet\");");
 	Z(" xsArraySetString(heroes_portrait,3,\"Art\\units\\infantry_ranged\\strelet\\strelet_portrait\");");
+	Z(" xsArraySetInt(heroes_r,3,MAMELUKE_DEATH_CIRCLE);");
 	
 	Z(" xsArraySetString(heroes,4,\"Janissary\");");
 	Z(" xsArraySetString(heroes_names,4,\"Janissary\");");
 	Z(" xsArraySetString(heroes_portrait,4,\"Art\\units\\infantry_ranged\\janissary\\janissary_icon_128\");");
+	Z(" xsArraySetInt(heroes_r,4,MAMELUKE_DEATH_CIRCLE);");
 	
 	Z(" xsArraySetString(heroes,5,\"MercMameluke\");");
 	Z(" xsArraySetString(heroes_names,5,\"Mameluke\");");
@@ -814,11 +830,11 @@ void main(void) {
 	
 	Z(" xsArraySetString(heroes,6,\"Dragoon\");");
 	Z(" xsArraySetString(heroes_names,6,\"Dragoon\");");
-	Z(" xsArraySetString(heroes_portrait,6,\"Art\\units\\calvary\\dragoon\\dragoon_portrait\");");
+	Z(" xsArraySetString(heroes_portrait,6,\"Art\\units\\cavalry\\dragoon\\dragoon_portrait\");");
 	
-	Z(" xsArraySetString(heroes,7,\"Priest\");");
-	Z(" xsArraySetString(heroes_names,7,\"Priest\");");
-	Z(" xsArraySetString(heroes_portrait,7,\"Art\\units\\priests\\we_priest_portrait\");");
+	Z(" xsArraySetString(heroes,7,\"SPCAmelia\");");
+	Z(" xsArraySetString(heroes_names,7,\"Amelia\");");
+	Z(" xsArraySetString(heroes_portrait,7,\"Art\\units\\spc\\amelia_black\\amelia_black_igc_icon\");");
 	
 	Z(" xsArraySetString(heroes,8,\"Dopplesoldner\");");
 	Z(" xsArraySetString(heroes_names,8,\"Dopplesoldner\");");
@@ -885,6 +901,9 @@ void main(void) {
 	Z(" radiant_creeppos=xsArrayCreateVector(1000,cOriginVector,\"\");");
 	Z(" respawn=xsArrayCreateInt(cNumberPlayers,-1,\"\");");
 	Z(" heroid=xsArrayCreateInt(cNumberPlayers,0,\"\");");
+	Z(" attacker=xsArrayCreateBool(cNumberPlayers*cNumberPlayers,false,\"\");");
+	Z(" attacker_time=xsArrayCreateInt(cNumberPlayers*cNumberPlayers,0,\"\");");
+	Z(" save_command=xsArrayCreateInt(cNumberPlayers,0,\"\");");
 
 	Z(" picked=xsArrayCreateInt(cNumberPlayers,-1,\"\");");
 	
@@ -1163,6 +1182,7 @@ void main(void) {
 	Z("  (xsArrayGetInt(heroes_r,xsArrayGetInt(picked,trCurrentPlayer()))+100)+\");\");");
 	
 	Z(" map(\"y\",\"root\",\" trackInsert(); trackAddWaypoint();trackPlay(-1,\"+(USEWARD+100)+\");\");");
+	Z(" map(\"x\",\"root\",\" trackInsert(); trackAddWaypoint();trackPlay(-1,\"+(BLINK+100)+\");\");");
 
 
 	Z(" }");
@@ -1175,6 +1195,7 @@ void main(void) {
 	Z(" if(trIsGadgetVisible(\"playersummarydlg\")) trChatSendToPlayer(0,-1,\"hehe\");");
 	
 	Z(" for(i=1;<2) {");
+	/*
 	Z("  xsSetContextPlayer(i);");
 	//after deny you have to wait to attack again
 	Z("    trUnitSelectClear();");
@@ -1194,13 +1215,15 @@ void main(void) {
 	Z("    uiLookAtAndSelectUnit("+firsthero+"+((i-1)*160+xsArrayGetInt(heroid,i)));");
 	//Z("    uiStopSelectedUnits();");
 	Z("   }");
-	Z("  }");
+	Z("  }");*/
 	//gold for kills
+	/*
 	Z(" if(trGetStatValue(i,2)>xsArrayGetInt(kills,i)) {");
 	Z("  xsArraySetInt(gold,i,xsArrayGetInt(gold,i)+(trGetStatValue(i,2)-xsArrayGetInt(kills,i))*50);");
 	Z("  xsArraySetInt(kills,i,trGetStatValue(i,2));");
 	Z(" }");
 	Z(" trPlayerGrantResources(i,\"gold\",xsArrayGetInt(gold,i)-trPlayerResourceCount(i,\"gold\"));");
+	*/
 	Z(" }");
 	//shop
 	Z(" if((xsArrayGetBool(note,trCurrentPlayer())==false) && trIsGadgetVisible(\"SPCNote\")) {");
@@ -1214,13 +1237,48 @@ void main(void) {
 	Z("  xsArraySetBool(note,trCurrentPlayer(),false);");
 	Z(" }");
 	
-	//counter +respawn
+	Z(" for(i=1;<cNumberPlayers) {");
+	Z("   for(k=1;<cNumberPlayers){");
+	Z("    xsSetContextPlayer(k);");
+	Z("    if("+firsthero+"+((i-1)*160+xsArrayGetInt(heroid,i))==");
+	Z("     kbUnitGetTargetUnitID("+firsthero+"+((k-1)*160+xsArrayGetInt(heroid,k)))) {");
+	Z("      xsArraySetBool(attacker,(i-1)*cNumberPlayers+k-1,true);");
+	Z("      xsArraySetInt(attacker_time,(i-1)*cNumberPlayers+k-1,trTimeMS());");
+	Z("    }");
+	Z("  }");
+	Z("  for(k=1;<cNumberPlayers){");
+	Z("   if(xsArrayGetInt(attacker_time,(i-1)*cNumberPlayers+k-1)+2000<trTimeMS()) {");
+	Z("     xsArraySetBool(attacker,(i-1)*cNumberPlayers+k-1,false);");
+	Z("   }");
+	Z("  }");
+	Z(" }");
+	
+	
+	
+	//counter +respawn +gold and xp from heroes
 	Z(" for(i=1;<cNumberPlayers) {");
 	Z("  if(xsArrayGetInt(respawn,i)==-1) {");
 	Z("   trUnitSelectClear();");
 	Z("   trUnitSelectByID("+firsthero+"+((i-1)*160+xsArrayGetInt(heroid,i)));");
 	Z("   if(trUnitDead()) { ");
+	//Z("    for(j=1;<=);");
+	Z("    xsSetContextPlayer(i);");
+	Z("   trChatSendToPlayer(0,-1,\"\"+kbUnitGetNumberWorkers("+firsthero+"+((i-1)*160+xsArrayGetInt(heroid,i))));");
 	Z("    trUnitChangeProtoUnit(\"CinematicBlock\");");
+	Z("   int gold_=500;");
+	Z("   int attacker_num=0;");
+	Z("   string msg=\"\";");
+	Z("   for(k=1;<cNumberPlayers){");
+	Z("    if(xsArrayGetBool(attacker,(i-1)*cNumberPlayers+k-1)) {");
+	Z("      attacker_num++;");
+	Z("      msg=msg+xsArrayGetString(heroes_names,xsArrayGetInt(picked,k))+\" \"; ");
+	Z("    }");
+	Z("   }");
+	Z("   if(attacker_num!=0) msg=msg+(gold_/attacker_num)+\" gold \";");
+	Z("   ");
+	Z("    trChatSendToPlayer(0,-1,\"\"+xsArrayGetString(heroes_names,xsArrayGetInt(picked,i))+");
+	Z("     \" <icon=(20)(\"+xsArrayGetString(heroes_portrait,xsArrayGetInt(picked,i))+\")>\"+");
+	Z("     \" dead \"+msg);");
 	Z("    xsArraySetInt(respawn,i,trTimeMS());");
 	Z("   }");
 	Z("  }");
@@ -1306,6 +1364,8 @@ void main(void) {
 	Z("  kbUnitQueryResetResults(qqqqq);");
 	Z("   kbUnitQuerySetPlayerID(qqqqq,-1);");
 	Z("   kbUnitQuerySetPlayerRelation(qqqqq,cPlayerRelationEnemy);");
+	Z("  kbUnitQuerySetPosition(qqqqq,xsArrayGetVector(move_to,i));");
+	Z("  kbUnitQuerySetMaximumDistance(qqqqq,10);");
 	Z("  kbUnitQuerySetUnitType(qqqqq,626);");
 	Z("  kbUnitQuerySetState(qqqqq,2);");
 	Z("  kbUnitQueryExecute(qqqqq);");
@@ -1317,10 +1377,11 @@ void main(void) {
 	Z("         for(cc=0;<=CC_size+1) {");
 	Z("         if(xsArrayGetInt(CC_type,cc)==-1){");
 	Z("      xsArraySetInt(CC_time,cc,trTimeMS());");
-	Z("      xsArraySetInt(CC_type,cc,2);");
+	Z("      xsArraySetInt(CC_type,cc,1);");
 	Z("      xsArraySetInt(CC_unit,cc,trGetSelectedUnitID(0));");
-	Z("      xsArraySetInt(CC_param1,cc,kbGetUnitBaseTypeID(trGetSelectedUnitID(0)));");
-	Z("      trUnitChangeProtoUnit(\"Settler\");");
+	Z("       trDamageUnit(100);");
+	//Z("      xsArraySetInt(CC_param1,cc,kbGetUnitBaseTypeID(trGetSelectedUnitID(0)));");
+	//Z("      trUnitChangeProtoUnit(\"Settler\");");
 	Z("      if(cc==CC_size+1)CC_size++;");
 	Z("      break;");
 	Z("        }");
@@ -1340,7 +1401,7 @@ void main(void) {
 	Z("      xsArraySetInt(CC_time,cc,trTimeMS());");
 	Z("      xsArraySetInt(CC_type,cc,3);");
 	Z("      xsArraySetInt(CC_unit,cc,trGetSelectedUnitID(0));");
-	Z("       trUnitChangeProtoUnit(\"WaypointFlag\");");
+	Z("       trUnitChangeProtoUnit(\"Fire\");");
 	Z("      if(cc==CC_size+1)CC_size++;");
 	Z("      break;");
 	Z("        }");
@@ -1401,6 +1462,18 @@ void main(void) {
 	Z("      trUnitChangeProtoUnit(\"CinematicBlock\");");
 	Z("     }");
 	Z("     pow_=pow_*2;");
+	Z("    }");
+	Z("    if(command!=0)xsArraySetInt(save_command,i,command);");
+	Z("    if(xsArrayGetInt(save_command,i)==MAMELUKE_DEATH_CIRCLE ||");
+	Z("       xsArrayGetInt(save_command,i)==BLINK) {");
+	Z("     command=0;");
+	Z("     trUnitSelectClear();");
+	Z("     trUnitSelectByID("+firsthotballon+"+(i-1));");
+	Z("     if((trUnitDistanceToPoint("+(rmPlayerLocXFraction(i)+rmXMetersToFraction(5))+",0,"+rmPlayerLocZFraction(i)+")>2) ");
+	Z("      && (kbUnitGetActionType("+firsthotballon+"+(i-1))==7)){");
+	Z("      command=xsArrayGetInt(save_command,i);");
+	Z("      xsArraySetInt(save_command,i,0);");
+	Z("     }");
 	Z("    }");
 	//-----------------------------------------------	
 	Z("   if(command==HEAL) {");
@@ -1557,10 +1630,7 @@ void main(void) {
 	Z("   }");
 	Z("  }");
 	Z(" if(command==MAMELUKE_DEATH_CIRCLE) {");
-	Z("   trUnitSelectClear();");
-	Z("   trUnitSelectByID("+firsthotballon+"+(i-1));");
-	Z("   if((trUnitDistanceToPoint("+(rmPlayerLocXFraction(i)+rmXMetersToFraction(5))+",0,"+rmPlayerLocZFraction(i)+")>2) ");
-	Z("    && (kbUnitGetActionType("+firsthotballon+"+(i-1))==7)){");
+
 	Z("     trUnitSelectClear();");
 	Z("     vector possss=kbGetBlockPosition(\"\"+("+firsthotballon+"+(i-1)));");	
 	Z("     xsArraySetVector(move_to,i,xsVectorSetY(possss,0));");
@@ -1583,8 +1653,8 @@ void main(void) {
 	Z("     trUnitSelectByID("+firstteleport+"+(i-1));");
 	Z("     trUnitChangeProtoUnit(\"CinematicBlock\");");
 	Z("     ");
-	Z("   }");
 	Z(" }");
+	
 	Z(" }");
 	//freeze
 	/*
@@ -1603,22 +1673,38 @@ void main(void) {
 	*/
 
 	Z("for(i=0;<radiant_creep_end) {");
-	//grant exp at dead pikemans
+	//grant exp at dead pikemans + gold
 	Z(" trUnitSelectClear();");
-	Z(" trUnitSelect(\"\"+("+first_radiant_creep+"+i));");
+	Z(" trUnitSelect(\"\"+("+first_dire_creep+"+i));");
 	Z(" if(xsArrayGetBool(radiant_dead_creeps,i) && trUnitDead()) {");
-	Z("  trChatSendToPlayer(0,-1,\"dead\");");
+	Z("  xsSetContextPlayer(kbUnitGetPlayerID("+first_dire_creep+"+i));");
+	
+	Z("  int workers=0;");
 	Z("  for(j=1;<cNumberPlayers) {");
+	Z("   for(k=0;<kbUnitGetNumberWorkers("+first_dire_creep+"+i)) {");
+	Z("    if(kbUnitGetWorkerID("+first_dire_creep+"+i,k)=="+firsthero+"+((j-1)*160+xsArrayGetInt(heroid,j))){");
+	Z("     workers++;");
+	Z("     break;");
+	Z("    }");
+	Z("   }");
 	Z("   if(xsVectorLength(xsArrayGetVector(radiant_creeppos,i)-");
-	Z(     "kbUnitGetPosition("+firsthero+"+((i-1)*160+xsArrayGetInt(heroid,i))))<20) {");
+	Z(     "kbUnitGetPosition("+firsthero+"+((j-1)*160+xsArrayGetInt(heroid,j))))<20) {");
 	Z("    xsArraySetInt(exp,j,xsArrayGetInt(exp,j)+100);");
 	Z("   }");
 	Z("  }");
+	Z("  for(j=1;<cNumberPlayers) {");
+	Z("   for(k=0;<kbUnitGetNumberWorkers("+first_dire_creep+"+i)) {");
+	Z("    if(kbUnitGetWorkerID("+first_dire_creep+"+i,k)=="+firsthero+"+((j-1)*160+xsArrayGetInt(heroid,j))){");
+	Z("     trPlayerGrantResources(j,\"gold\",50/workers);");
+	Z("     break;");
+	Z("    }");
+	Z("   }");
+	Z("  }" );
 	Z("  xsArraySetBool(radiant_dead_creeps,i,false);");
 	Z(" }");
 	Z(" if(xsArrayGetBool(radiant_dead_creeps,i) && (trUnitDead()==false)) {");
 	Z("  xsArraySetVector(radiant_creeppos,i,kbGetBlockPosition(\"\"+("+first_radiant_creep+"+i)));");
-	Z("}");
+	Z("  }");
 	Z("}");
 	Z("  onesectimer=trTimeMS();");
 	Z(" }");
@@ -1662,8 +1748,8 @@ void main(void) {
 	Z("  kbUnitQueryDestroy(q);");
 	Z("  auratimer=trTimeMS();");
 	Z(" }");*/
-	//spawn creeps
 	
+	//spawn creeps
 	Z(" for(team=0;<=1) {");
 	Z("  if(xsArrayGetInt(creepwave,team)*30<trTime()) {");
 	//Z("   trArmyDispatch(\"\"+xsArrayGetInt(creep_spawner_player,team)+\",0\",\"Pikeman\",3,50+(team*300),0,200,0,true);");
