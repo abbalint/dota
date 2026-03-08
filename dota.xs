@@ -1,7 +1,10 @@
 /*
+DOTA
+https://github.com/abbalint/dota
+
 dizzy/silence (highlight,flash=true)
 stun/knock down (hightlight, flash=false)
-immobilize (turn unit around?)
+immobilize (?)
 freeze (fakify)
 slow down (only for heroes)
 hp +- (only for heroes)
@@ -20,17 +23,18 @@ transform to settler(hex) (attack to zero)
 deathmatch->ability draft
 
 STR:
--hp bonus
+-hp bonus 
 -hp regen bonus
 -damage (for STR heroes)
 
 INT:
--mana bonus
--mana regen bonus
--damage (for INT heroes)
--higher spell resistance?
+-mana bonus (50)
+-mana regen bonus (0.1)
+-damage (for INT heroes) (2)
+-higher magic resistance? (0.1)
+-higher spell resistance? (0.1)
 DXT:
--higher enemy miss chance
+-higher enemy miss chance (0.2)
 -attack speed (by damageunit during attacks)
 -damage (for DXT heroes)
 */
@@ -374,10 +378,15 @@ void main(void) {
 	Z("const int MAMELUKE_DEATH_CIRCLE=6;");
 	Z("const int NUKE=7;");
 	Z("const int BLINK=8;");
+	Z("const int SHIPWRECK=9;");
 	// ----- items -----
 	Z("const int BUYWARD=70;");
 	Z("const int USEWARD=71;");
 	//------------------
+	Z("const int LVL_UP_Q=95;");
+	Z("const int LVL_UP_W=96;");
+	Z("const int LVL_UP_E=97;");
+	Z("const int LVL_UP_R=98;");
 	Z("int cooldown=-1;");
 	Z("int mana_cost=-1;");
 	
@@ -674,13 +683,27 @@ void main(void) {
 	Z("}");
 	Z("void buy_b(int a=-1) {");
 	Z(" if(xsArrayGetInt(gold,trCurrentPlayer())<10) {");
-	Z("  trChatSendToPlayer(0,trCurrentPlayer(),\"You have not enough gold!\");");
+	Z("  trChatSendToPlayer(0,trCurrentPlayer(),\"You do not have enough gold!\");");
 	Z("  return;");
 	Z(" }");
 	Z(" docommand(BUYWARD);");
 	Z("}");
 	
+	Z("void showchoice(int a=-1){");
+	Z(" if(xsArrayGetInt(skillpoints,trCurrentPlayer())>0) {");
+	Z("  trShowChoiceDialog(\"|Q| (level \"+xsArrayGetInt(q_level,trCurrentPlayer())+");
+	Z("   \")\",\"lvl up\",LVL_UP_Q,\"Exit\",-1);");
+	Z("  pause();");
+	Z(" }");
+	Z(" else {");
+	Z("  trChatSendToPlayer(0,trCurrentPlayer(),\"You dont have any skillpoints to spend.\");");
+	Z(" }");
+	Z("}");
 	
+	Z("void lvlupskill(int id=-1) {");
+	Z("  trChatSendToPlayer(0,trCurrentPlayer(),\"test\");");
+	Z(" docommand(id);");
+	Z("}");
 	
 	
 	Z("void healunit(int number=0,float y=0) {");
@@ -715,14 +738,6 @@ void main(void) {
 	Z("}");
 	Z("}");
 
-	Z("void spelllevel(int a=-1) {");
-	Z(" if(xsArrayGetInt(skillpoints,trCurrentPlayer())==0) {");
-	Z("  trChatSendToPlayer(0,-1,\"You dont have any skillpoints to spend.\");");
-	Z(" }");
-	Z(" else {");
-	Z("  trShowChoiceDialog(\"|Q| unskilled\",\"level up\",-1,\"next spell\",-1);");
-	Z(" }");
-	Z("}");
 
 	Z("void KEYS(string a=\"\",");
 	Z("string b=\"\",");
@@ -793,9 +808,9 @@ void main(void) {
 	Z(" xsArraySetInt(heroes_q,1,STORMHAMMER);");
 	Z(" xsArraySetInt(heroes_w,1,PASSIVEHP);");
 	Z(" xsArraySetInt(heroes_e,1,PASSIVECLEAVE);");
-	Z(" xsArraySetInt(heroes_r,1,HEAL);");
-	Z(" xsArraySetInt(cooldown,HEAL,60);");
-	Z(" xsArraySetInt(mana_cost,HEAL,100);");
+	Z(" xsArraySetInt(heroes_r,1,SHIPWRECK);");
+	Z(" xsArraySetInt(cooldown,SHIPWRECK,60);");
+	Z(" xsArraySetInt(mana_cost,SHIPWRECK,100);");
 	
 	Z(" xsArraySetString(heroes,2,\"Explorer\");");
 	Z(" xsArraySetString(heroes_names,2,\"Explorer\");");
@@ -860,8 +875,8 @@ void main(void) {
 	Z("w_level=xsArrayCreateInt(cNumberPlayers,0,\"\");");
 	Z("e_level=xsArrayCreateInt(cNumberPlayers,0,\"\");");
 	Z("r_level=xsArrayCreateInt(cNumberPlayers,0,\"\");");
-	Z("lvl=xsArrayCreateInt(cNumberPlayers,0,\"\");");
-	Z("skillpoints=xsArrayCreateInt(cNumberPlayers,2,\"\");");
+	Z("lvl=xsArrayCreateInt(cNumberPlayers,1,\"\");");
+	Z("skillpoints=xsArrayCreateInt(cNumberPlayers,0,\"\");");
 		
 	Z(" creepwave=xsArrayCreateInt(2,0,\"\");");
 	Z(" creep_spawner_player=xsArrayCreateInt(2,1,\"\");");
@@ -1018,10 +1033,14 @@ void main(void) {
 	Z(" trEventSetHandler(10005,\"empower\");");
 	Z(" trEventSetHandler(10006,\"buy_a\");");
 	Z(" trEventSetHandler(10011,\"buy_b\");");
-	Z(" trEventSetHandler(10009,\"spelllevel\");");
+	Z(" trEventSetHandler(10009,\"showchoice\");");
 	Z(" trEventSetHandler(11111,\"test\");");
-	Z(" for(i=1;<100) trEventSetHandler(i+100,\"key_pressed\");");
-	Z(" for(i=1;<100) trEventSetHandler(i,\"key_use\");");
+	Z(" for(i=1;<90) trEventSetHandler(i+100,\"key_pressed\");");
+	Z(" for(i=1;<90) trEventSetHandler(i,\"key_use\");");
+	Z(" trEventSetHandler(LVL_UP_Q,\"lvlupskill\");");
+	Z(" trEventSetHandler(LVL_UP_W,\"lvlupskill\");");
+	Z(" trEventSetHandler(LVL_UP_E,\"lvlupskill\");");
+	Z(" trEventSetHandler(LVL_UP_R,\"lvlupskill\");");
 
 	Z(" map(\"F1\", \"root\", \"restartCurrentGame\");");
 	Z(" map(\"tab\",\"root\",\" gadgetUnreal("+"\\"+"commandpanel2commands"+"\\"+")\");");
@@ -1169,7 +1188,6 @@ void main(void) {
 	Z(" map(\"mouse2down\",\"root\",\" trackInsert(); trackAddWaypoint();trackPlay(-1,10003);\");");
 	Z(" map(\"mouse1down\",\"root\",\" trackInsert(); trackAddWaypoint();trackPlay(-1,10004);\");");
 	Z(" map(\"mouse1down\",\"empower\",\" trackInsert(); trackAddWaypoint();trackPlay(-1,10005);\");");
-	Z(" map(\"space\",\"root\",\" trackInsert(); trackAddWaypoint();trackPlay(-1,10009);\");");
 	Z(" map(\"s\",\"root\",\" uiStopSelectedUnits() \");");
 	
 	Z(" map(\"q\",\"root\",\" trackInsert(); trackAddWaypoint();trackPlay(-1,\"+");
@@ -1184,7 +1202,7 @@ void main(void) {
 	Z(" map(\"y\",\"root\",\" trackInsert(); trackAddWaypoint();trackPlay(-1,\"+(USEWARD+100)+\");\");");
 	Z(" map(\"x\",\"root\",\" trackInsert(); trackAddWaypoint();trackPlay(-1,\"+(BLINK+100)+\");\");");
 
-
+	Z(" map(\"space\",\"root\",\" trackInsert(); trackAddWaypoint();trackPlay(-1,\"+(10009)+\");\");");
 	Z(" }");
 	Z("}");
 	Z("else {");
@@ -1195,6 +1213,14 @@ void main(void) {
 	Z(" if(trIsGadgetVisible(\"playersummarydlg\")) trChatSendToPlayer(0,-1,\"hehe\");");
 	
 	Z(" for(i=1;<2) {");
+	Z("  xsSetContextPlayer(i);");
+	Z(" if(trQuestVarGet(\"test\")==0) {");
+	Z(" }");/*
+	Z("  if((kbUnitGetActionType("+firsthero+"+((i-1)*160+xsArrayGetInt(heroid,i)))==15)&&(xsArrayGetInt(lastattack,i)+1500<trTimeMS())){");
+	Z("	  xsArraySetInt(lastattack,i,trTimeMS());");
+	Z("  trChatSendToPlayer(0,-1,\"now\");");
+	Z("  }");*/
+	//Z("  trChatSendToPlayer(0,-1,\"\"+kbUnitGetActionType("+firsthero+"+((i-1)*160+xsArrayGetInt(heroid,i))));");
 	/*
 	Z("  xsSetContextPlayer(i);");
 	//after deny you have to wait to attack again
@@ -1274,12 +1300,17 @@ void main(void) {
 	Z("      msg=msg+xsArrayGetString(heroes_names,xsArrayGetInt(picked,k))+\" \"; ");
 	Z("    }");
 	Z("   }");
-	Z("   if(attacker_num!=0) msg=msg+(gold_/attacker_num)+\" gold \";");
+	Z("   if(attacker_num!=0) msg=msg+(gold_/attacker_num)+\" gold <icon=(20)(ui\command\generate_coin_off)>\";");
 	Z("   ");
-	Z("    trChatSendToPlayer(0,-1,\"\"+xsArrayGetString(heroes_names,xsArrayGetInt(picked,i))+");
+	Z("    trChatSendToPlayer(0,-1,\"<color=1,0,0>\"+");
+	Z("     xsArrayGetString(heroes_names,xsArrayGetInt(picked,i))+");
 	Z("     \" <icon=(20)(\"+xsArrayGetString(heroes_portrait,xsArrayGetInt(picked,i))+\")>\"+");
-	Z("     \" dead \"+msg);");
+	Z("     \" dead </color>\"+msg);");
 	Z("    xsArraySetInt(respawn,i,trTimeMS());");
+	Z("   if(i==trCurrentPlayer()){");
+	//Z("    sunColor(100, 100, 100);");
+	Z("    trOverlayText(\"You're dead\",60);");
+	Z("   }");
 	Z("   }");
 	Z("  }");
 	Z("  else {");
@@ -1343,6 +1374,7 @@ void main(void) {
 	
 	Z(" for(i=1;<cNumberPlayers) {");
 	//handle move action
+	//IGCShipwreck
 	Z("   if(xsArrayGetInt(move_action,i)!=-1) {");
 	Z("    vector pposs=kbGetBlockPosition(\"\"+("+firsthero+"+((i-1)*160+xsArrayGetInt(heroid,i))));");
 	Z("    if(xsVectorLength(pposs-xsArrayGetVector(move_to,i))<xsArrayGetInt(move_range,i)) {");
@@ -1373,19 +1405,26 @@ void main(void) {
 	Z("  for(j=0;<kbUnitQueryNumberResults(qqqqq)) {");
 	Z("  trUnitSelectClear();");
 	Z("   trUnitSelectByID(kbUnitQueryGetResult(qqqqq,j));");
-	Z("     ");
+	Z("     trQuestVarSetFromRand(\"chance\",0,99,true);");
+	Z("      if(trQuestVarGet(\"chance\")<50) {");
+	Z("       trChatSendToPlayer(0,i,\"<color=1,1,1>\"+");
+	Z(" kbGetProtoUnitName(kbGetUnitBaseTypeID(kbUnitQueryGetResult(qqqqq,j)))+\" resisted mameluke's circle\");");
+	Z("       }");
+	Z("      else {");
 	Z("         for(cc=0;<=CC_size+1) {");
 	Z("         if(xsArrayGetInt(CC_type,cc)==-1){");
 	Z("      xsArraySetInt(CC_time,cc,trTimeMS());");
 	Z("      xsArraySetInt(CC_type,cc,1);");
 	Z("      xsArraySetInt(CC_unit,cc,trGetSelectedUnitID(0));");
 	Z("       trDamageUnit(100);");
+	Z("       trUnitHighlight(10,false);");
 	//Z("      xsArraySetInt(CC_param1,cc,kbGetUnitBaseTypeID(trGetSelectedUnitID(0)));");
 	//Z("      trUnitChangeProtoUnit(\"Settler\");");
 	Z("      if(cc==CC_size+1)CC_size++;");
 	Z("      break;");
 	Z("        }");
 	Z("       }");
+	Z("    }");
 	Z("  }");
 
 	Z("  kbUnitQueryDestroy(qqqqq);");	
@@ -1421,6 +1460,16 @@ void main(void) {
 
 	Z(" ");
 	
+	//displaying spells cooldown
+	Z(" int qqqq=(100*(trTime()-xsArrayGetInt(r_cooldown,trCurrentPlayer()))/");
+	Z(" (xsArrayGetInt(cooldown,xsArrayGetInt(heroes_r,xsArrayGetInt(picked,trCurrentPlayer())))));");
+	Z(" if(qqqq>100)qqqq=100;");
+	Z(" trSetCounterDisplay(\"Q|\"+xsArrayGetInt(q_level,trCurrentPlayer())+\"|\"+qqqq+\"%% \"+");
+	Z(" \"W|\"+xsArrayGetInt(w_level,trCurrentPlayer())+\"|100%% \"+");
+	Z(" \"E|\"+xsArrayGetInt(e_level,trCurrentPlayer())+\"|100%% \"+");
+	Z(" \"R|\"+xsArrayGetInt(r_level,trCurrentPlayer())+\"|100%%\");");
+	
+	//display stats
 	Z("trSetCinematicUnitSpeaking(\""+firsthero+"\",true,1);");
 	//Z(" trUnitSelectClear();trUnitSelectByID("+firsthero+");trDamageUnitPercent(10);");
 	//print stats
@@ -1433,6 +1482,8 @@ void main(void) {
 	Z("  stats=stats+(100*xsArrayGetFloat(magicresistance,trCurrentPlayer()))+\"%% \";");
 	Z("  stats=stats+padding+padding+padding+padding+\"_\"+padding;");
 	Z("  stats=stats+\"XP: \"+(xsArrayGetInt(exp,trCurrentPlayer()))+\" \";");
+	Z("  stats=stats+\"LVL: \"+(xsArrayGetInt(lvl,trCurrentPlayer()))+\" \";");
+	Z("  stats=stats+\"Skillpoints: \"+(xsArrayGetInt(skillpoints,trCurrentPlayer()))+\" \";");
 	Z("  stats=stats+padding+padding+padding+padding+\"_\"+padding;");
 	Z("  stats=stats+\"Str: 20, Dex:30, Int:25 \";");
 	Z("  stats=stats+\"_\"+padding;");
@@ -1655,6 +1706,11 @@ void main(void) {
 	Z("     ");
 	Z(" }");
 	
+	Z(" if(command==LVL_UP_Q) {");
+	Z("  xsArraySetInt(q_level,i,xsArrayGetInt(q_level,i)+1);");
+	Z("  xsArraySetInt(skillpoints,i,xsArrayGetInt(skillpoints,i)-1);");
+	Z(" }");
+	
 	Z(" }");
 	//freeze
 	/*
@@ -1671,7 +1727,7 @@ void main(void) {
 	Z(" }");
 	Z("}");
 	*/
-
+	Z("  kbLookAtAllUnitsOnMap();");
 	Z("for(i=0;<radiant_creep_end) {");
 	//grant exp at dead pikemans + gold
 	Z(" trUnitSelectClear();");
@@ -1690,12 +1746,17 @@ void main(void) {
 	Z("   if(xsVectorLength(xsArrayGetVector(radiant_creeppos,i)-");
 	Z(     "kbUnitGetPosition("+firsthero+"+((j-1)*160+xsArrayGetInt(heroid,j))))<20) {");
 	Z("    xsArraySetInt(exp,j,xsArrayGetInt(exp,j)+100);");
+	Z("    if(xsArrayGetInt(lvl,j)*100<xsArrayGetInt(exp,j)) {");
+	Z("     xsArraySetInt(lvl,j,xsArrayGetInt(lvl,j)+1);");
+	Z("     xsArraySetInt(skillpoints,j,xsArrayGetInt(skillpoints,j)+1);");
+	Z("    }");
 	Z("   }");
 	Z("  }");
 	Z("  for(j=1;<cNumberPlayers) {");
 	Z("   for(k=0;<kbUnitGetNumberWorkers("+first_dire_creep+"+i)) {");
 	Z("    if(kbUnitGetWorkerID("+first_dire_creep+"+i,k)=="+firsthero+"+((j-1)*160+xsArrayGetInt(heroid,j))){");
 	Z("     trPlayerGrantResources(j,\"gold\",50/workers);");
+	Z("     trChatSendToPlayer(0,j,\"Pikeman \"+(50/workers)+\"<icon=(20)(ui\command\generate_coin_off)>\");");
 	Z("     break;");
 	Z("    }");
 	Z("   }");
@@ -1709,12 +1770,7 @@ void main(void) {
 	Z("  onesectimer=trTimeMS();");
 	Z(" }");
 	
-	//displaying spells cooldown
-	Z(" int qqqq=(100*(trTime()-xsArrayGetInt(r_cooldown,trCurrentPlayer()))/");
-	Z(" (xsArrayGetInt(cooldown,xsArrayGetInt(heroes_r,xsArrayGetInt(picked,trCurrentPlayer())))));");
-	Z(" if(qqqq>100)qqqq=100;");
-	Z(" trSetCounterDisplay(\"Q:\"+qqqq+\"%%\"+");
-	Z(" \" W:100%% E:100%% R:100%% Y:100%% X:100%%\");");
+
 	/*
 	//q power
 	Z(" xsSetContextPlayer(1);");
