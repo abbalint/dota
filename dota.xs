@@ -63,7 +63,7 @@ int area_vector(float x1=0, float y1=0, float z1=0) {
 	//rmSetAreaBaseHeight(e,4.0);
 	rmSetAreaCoherence(e,1.0);
 	//rmSetAreaHeightBlend(e,2);
-	rmSetAreaSize(e,0.5/400.0,0.5/400);
+	rmSetAreaSize(e,0.5/400.0,0.5/400.0);
 	//if(type=="TownCenter") rmSetAreaSize(e,0.01,0.01);
 	rmSetAreaTerrainType(e,"texas\ground3_tex");//texas\ground5_tex
 	rmBuildArea(e);
@@ -336,6 +336,9 @@ void main(void) {
 	Z("int hpregen=-1;");
 	Z("int magicresistance=-1;");
 	Z("int misschance=-1;");
+	Z("int str=-1;");
+	Z("int intel=-1;");
+	Z("int dxt=-1;");
 	
 	Z("int CC_time=-1;");
 	Z("int CC_type=-1;");
@@ -369,6 +372,12 @@ void main(void) {
 	Z("int r_level=-1;");
 	Z("int heroes_portrait=-1;");
 	Z("int heroes_desc=-1;");
+	Z("int heroes_base_INT=-1;");
+	Z("int heroes_base_STR=-1;");
+	Z("int heroes_base_DXT=-1;");
+	Z("int attr_per_level_INT=-1;");
+	Z("int attr_per_level_STR=-1;");
+	Z("int attr_per_level_DXT=-1;");
 	// ---- spells -----
 	Z("const int STORMHAMMER=1;");
 	Z("const int PASSIVEHP=2;");
@@ -416,6 +425,132 @@ void main(void) {
 	Z("	}");
 	Z("	return (ret);");
 	Z("}");
+	
+	Z("float distance2(vector v0=cOriginVector, vector v1=cOriginVector) {");
+	Z(" vector sub=v0-v1;");
+	Z(" return(xsVectorGetX(sub)*xsVectorGetX(sub)+xsVectorGetZ(sub)*xsVectorGetZ(sub));");
+	Z("}");
+	
+	Z("vector LineLine(vector p1=cOriginVector,vector p2=cOriginVector,vector p3=cOriginVector,vector p4=cOriginVector){");
+	Z(" float x1=xsVectorGetX(p1);");
+	Z(" float x2=xsVectorGetX(p2);");
+	Z(" float y1=xsVectorGetZ(p1);");
+	Z(" float y2=xsVectorGetZ(p2);");
+	Z(" float x3=xsVectorGetX(p3);");
+	Z(" float x4=xsVectorGetX(p4);");
+	Z(" float y3=xsVectorGetZ(p3);");
+	Z(" float y4=xsVectorGetZ(p4);");
+	Z(" float uA = ((x4-x3)*(y1-y3) - (y4-y3)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1));");
+	Z(" return(xsVectorSetZ(xsVectorSetX(cOriginVector,x1+(uA*(x2-x1))),y1+(uA*(y2-y1))));");
+	Z("}");
+	
+	//BST////
+	Z("void createtree(string name=\"default\") {");
+	Z(" trQuestVarSet(name,xsArrayCreateInt(1000,-1,\"\"));");
+	Z(" trQuestVarSet(name+\"_left\",xsArrayCreateInt(1000,-1,\"\"));");
+	Z(" trQuestVarSet(name+\"_right\",xsArrayCreateInt(1000,-1,\"\"));");
+	Z(" trQuestVarSet(name+\"_root\",-1);");
+	Z("}");
+	Z("int newNodeCreate(string name=\"default\",int value=0) {");
+	Z(" for(i=0;<1000) {");
+	Z("  if(xsArrayGetInt(trQuestVarGet(name),i)==-1)break;");
+	Z(" }");
+	Z(" xsArraySetInt(trQuestVarGet(name),i,value);");
+	Z(" return(i);");
+	Z("}");
+	
+	Z("int searchNode(string name=\"default\", int root=-1, int target=-1) {");
+	Z(" if(root==-1) return(root);");
+	Z(" if(xsArrayGetInt(trQuestVarGet(name),root)==target) return(root);");
+	Z(" if(xsArrayGetInt(trQuestVarGet(name),root)< target) {");
+	Z("  return(searchNode(name,xsArrayGetInt(trQuestVarGet(name+\"_right\"),root), target));");
+	Z("}");
+	Z(" return(searchNode(name,xsArrayGetInt(trQuestVarGet(name+\"_left\"),root), target));");
+	Z("}");
+	
+	Z("int insertNode(string name=\"default\", int node=-1, int value=-1) {");
+	Z(" if(node==-1) return(newNodeCreate(name,value));");
+	Z(" if(value < xsArrayGetInt(trQuestVarGet(name),node)) ");
+	Z("  xsArraySetInt(trQuestVarGet(name+\"_left\"),node,");
+	Z("   insertNode(name,xsArrayGetInt(trQuestVarGet(name+\"_left\"),node),value));");
+	Z(" if(value > xsArrayGetInt(trQuestVarGet(name),node)) ");
+	Z("  xsArraySetInt(trQuestVarGet(name+\"_right\"),node,");
+	Z("   insertNode(name,xsArrayGetInt(trQuestVarGet(name+\"_right\"),node),value));");
+	Z(" return(node);");
+	Z("}");
+	
+	Z("void insert(string name=\"default\",int value=-1) {");
+	Z(" if(trQuestVarGet(name+\"_root\")==-1)");
+	Z("  trQuestVarSet(name+\"_root\",insertNode(name,-1,value));");
+	Z(" else");
+	Z("  insertNode(name,trQuestVarGet(name+\"_root\"),value);");
+	Z("}");
+	
+	Z("void inOrder(string name=\"default\",int root=-2) {");
+	Z(" int root_=-1;");
+	Z(" if(root==-2)root_=trQuestVarGet(name+\"_root\");");
+	Z(" else root_=root;");
+	Z(" if(root_!=-1) {");
+	Z("  inOrder(name,xsArrayGetInt(trQuestVarGet(name+\"_left\"),root_));");
+	Z("  trChatSendToPlayer(0,-1,\"\"+xsArrayGetInt(trQuestVarGet(name),root_));");
+	Z("  inOrder(name,xsArrayGetInt(trQuestVarGet(name+\"_right\"),root_));");
+	Z(" }");
+	Z("}");
+
+	Z("int findMin(string name=\"default\", int root=-1){");
+	Z(" if(root==-1) return(-1);");
+	Z(" else if(xsArrayGetInt(trQuestVarGet(name+\"_left\"),root)!=-1)");
+	Z("  return(findMin(name,xsArrayGetInt(trQuestVarGet(name+\"_left\"),root)));");
+	Z(" return(root);");
+	Z("}");
+
+	Z("int delete(string name=\"default\", int root=-1, int x=-1) {");
+	Z(" if(root==-1) return(-1);");
+	Z(" if(x>xsArrayGetInt(trQuestVarGet(name),root))");
+	Z("   xsArraySetInt(trQuestVarGet(name+\"_right\"),root,");
+	Z("    delete(name,xsArrayGetInt(trQuestVarGet(name+\"_right\"),root),x));");
+	Z(" else if(x<xsArrayGetInt(trQuestVarGet(name),root))");
+	Z("   xsArraySetInt(trQuestVarGet(name+\"_left\"),root,");
+	Z("    delete(name,xsArrayGetInt(trQuestVarGet(name+\"_left\"),root),x));");
+	Z(" else {");
+	
+	Z("  if((xsArrayGetInt(trQuestVarGet(name+\"_right\"),root)==-1) &&");
+	Z("   (xsArrayGetInt(trQuestVarGet(name+\"_left\"),root)==-1)){");
+	Z("   xsArraySetInt(trQuestVarGet(name),root,-1);");
+	Z("   return(-1);");
+	Z("  }");
+	Z("  else if((xsArrayGetInt(trQuestVarGet(name+\"_right\"),root)==-1) ||");
+	Z("   (xsArrayGetInt(trQuestVarGet(name+\"_left\"),root)==-1)){");
+	Z("   int temp=-1;");
+	Z("   if(xsArrayGetInt(trQuestVarGet(name+\"_left\"),root)==-1)");
+	Z("    temp=xsArrayGetInt(trQuestVarGet(name+\"_right\"),root);");
+	Z("   else ");
+	Z("    temp=xsArrayGetInt(trQuestVarGet(name+\"_left\"),root);");
+	Z("   xsArraySetInt(trQuestVarGet(name),root,-1);");
+	Z("   return(temp);");
+	Z("  }");
+	Z("  else {");
+	Z("   int temp2=findMin(name,xsArrayGetInt(trQuestVarGet(name+\"_right\"),root));");
+	Z("   xsArraySetInt(trQuestVarGet(name),root,xsArrayGetInt(trQuestVarGet(name),temp2));");
+	Z("   xsArraySetInt(trQuestVarGet(name+\"_right\"),root,delete(name,");
+	Z("    xsArrayGetInt(trQuestVarGet(name+\"_right\"),root),xsArrayGetInt(trQuestVarGet(name),temp2)));");
+	Z("  }");
+	Z(" }");
+	Z(" return(root);");
+	Z("}");
+	
+	Z("void del(string name=\"default\", int x=-1){");
+	Z(" if(xsArrayGetInt(trQuestVarGet(name),trQuestVarGet(name+\"_root\"))==x) {");
+	Z("  trQuestVarSet(name+\"_root\",delete(name,trQuestVarGet(name+\"_root\"),x));");
+	Z(" }");
+	Z(" else {");
+	Z("  delete(name,trQuestVarGet(name+\"_root\"),x);");
+	Z(" }");
+	Z("}");
+
+	/////////
+	
+	
 	
 	Z("void docommand(int id=0) {");
 	Z(" saveCamera(\"tempcamera\");");
@@ -701,7 +836,6 @@ void main(void) {
 	Z("}");
 	
 	Z("void lvlupskill(int id=-1) {");
-	Z("  trChatSendToPlayer(0,trCurrentPlayer(),\"test\");");
 	Z(" docommand(id);");
 	Z("}");
 	
@@ -797,6 +931,12 @@ void main(void) {
 	Z("heroes_w=xsArrayCreateInt(MAX_HEROES+1,0,\"\");");
 	Z("heroes_e=xsArrayCreateInt(MAX_HEROES+1,0,\"\");");
 	Z("heroes_r=xsArrayCreateInt(MAX_HEROES+1,0,\"\");");
+	Z("heroes_base_INT=xsArrayCreateInt(MAX_HEROES+1,20,\"\");");
+	Z("heroes_base_STR=xsArrayCreateInt(MAX_HEROES+1,20,\"\");");
+	Z("heroes_base_DXT=xsArrayCreateInt(MAX_HEROES+1,20,\"\");");
+	Z("attr_per_level_INT=xsArrayCreateFloat(MAX_HEROES+1,2,\"\");");
+	Z("attr_per_level_STR=xsArrayCreateFloat(MAX_HEROES+1,2,\"\");");
+	Z("attr_per_level_DXT=xsArrayCreateFloat(MAX_HEROES+1,2,\"\");");
 	
 	Z("cooldown=xsArrayCreateInt(101,-1,\"\");");
 	Z("mana_cost=xsArrayCreateInt(101,-1,\"\");");
@@ -919,7 +1059,10 @@ void main(void) {
 	Z(" attacker=xsArrayCreateBool(cNumberPlayers*cNumberPlayers,false,\"\");");
 	Z(" attacker_time=xsArrayCreateInt(cNumberPlayers*cNumberPlayers,0,\"\");");
 	Z(" save_command=xsArrayCreateInt(cNumberPlayers,0,\"\");");
-
+	Z(" str=xsArrayCreateInt(cNumberPlayers,20,\"\");");
+	Z(" intel=xsArrayCreateInt(cNumberPlayers,20,\"\");");
+	Z(" dxt=xsArrayCreateInt(cNumberPlayers,20,\"\");");
+	
 	Z(" picked=xsArrayCreateInt(cNumberPlayers,-1,\"\");");
 	
 	Z(" for(i=1;<cNumberPlayers) {");
@@ -1050,7 +1193,22 @@ void main(void) {
 	Z("gadgetUnreal(\"minimapPanel-dpfood\");");
 	Z("gadgetUnreal(\"minimapPanel-dptotalPopLeft\");");
 	
-
+	
+	Z("createtree(\"test\");");
+	//Z("for(i=0;<500)insert(\"test\",i);");
+	Z("insert(\"test\",2422342);");
+	Z("insert(\"test\",344222);");
+	Z("insert(\"test\",4322222);");
+	//Z("del(\"test\",4234);");
+	Z("inOrder(\"test\");");
+	//≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠
+	//≠≠   ≠≠≠≠≠≠≠    ≠≠≠≠≠       ≠≠≠≠≠≠≠≠  ≠≠≠≠≠≠≠≠≠
+	//≠≠ ≠≠ ≠≠≠≠≠ ≠≠≠≠ ≠≠≠≠≠≠≠ ≠≠≠≠≠≠≠≠≠≠ ≠≠ ≠≠≠≠≠≠≠≠
+	//≠≠ ≠≠≠ ≠≠≠≠ ≠≠≠≠≠ ≠≠≠≠≠≠ ≠≠≠≠≠≠≠≠≠ ≠≠≠≠ ≠≠≠≠≠≠≠
+	//≠≠ ≠≠≠ ≠≠≠≠ ≠≠≠≠≠ ≠≠≠≠≠≠ ≠≠≠≠≠≠≠≠        ≠≠≠≠≠≠
+	//≠≠ ≠≠ ≠≠≠≠≠≠ ≠≠≠ ≠≠≠≠≠≠≠ ≠≠≠≠≠≠≠ ≠≠≠≠≠≠≠≠ ≠≠≠≠≠
+	//≠≠   ≠≠≠≠≠≠≠≠   ≠≠≠≠≠≠≠≠ ≠≠≠≠≠≠ ≠≠≠≠≠≠≠≠≠≠ ≠≠≠≠
+	//≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠
 	Z("if(pick) {");
 
 		Z(" map(\"mouse2down\",\"root\",\" uiWorkAtPointer();\");");
@@ -1182,7 +1340,9 @@ void main(void) {
 	Z("  trUnitSelectClear();");
 	Z("  trArmySelectInt(0,i);");
 	Z("  trUnitDelete(true);");
-
+	Z("  xsArraySetInt(intel,i,xsArrayGetInt(heroes_base_INT,xsArrayGetInt(picked,i)));");
+	Z("  xsArraySetInt(str,i,xsArrayGetInt(heroes_base_STR,xsArrayGetInt(picked,i)));");
+	Z("  xsArraySetInt(dxt,i,xsArrayGetInt(heroes_base_DXT,xsArrayGetInt(picked,i)));");
 	Z(" }");
 	
 	Z(" map(\"mouse2down\",\"root\",\" trackInsert(); trackAddWaypoint();trackPlay(-1,10003);\");");
@@ -1409,6 +1569,7 @@ void main(void) {
 	Z("      if(trQuestVarGet(\"chance\")<50) {");
 	Z("       trChatSendToPlayer(0,i,\"<color=1,1,1>\"+");
 	Z(" kbGetProtoUnitName(kbGetUnitBaseTypeID(kbUnitQueryGetResult(qqqqq,j)))+\" resisted mameluke's circle\");");
+	Z("       trSetCinematicUnitSpeaking(\"\"+kbUnitQueryGetResult(qqqqq,j),true,1);");
 	Z("       }");
 	Z("      else {");
 	Z("         for(cc=0;<=CC_size+1) {");
@@ -1469,11 +1630,11 @@ void main(void) {
 	Z(" \"E|\"+xsArrayGetInt(e_level,trCurrentPlayer())+\"|100%% \"+");
 	Z(" \"R|\"+xsArrayGetInt(r_level,trCurrentPlayer())+\"|100%%\");");
 	
-	//display stats
-	Z("trSetCinematicUnitSpeaking(\""+firsthero+"\",true,1);");
+	
+	
 	//Z(" trUnitSelectClear();trUnitSelectByID("+firsthero+");trDamageUnitPercent(10);");
 	//print stats
-	Z("  string padding=\"                          \";");
+	Z("  string padding=\"   \";");
 	Z("  string stats=\"\";");
 	Z("  stats=stats+padding+\"   \"+xsArrayGetInt(mana,trCurrentPlayer());");
 	Z("  stats=stats+\"/\"+xsArrayGetInt(maxmana,trCurrentPlayer())+\" +3\";");
@@ -1485,7 +1646,9 @@ void main(void) {
 	Z("  stats=stats+\"LVL: \"+(xsArrayGetInt(lvl,trCurrentPlayer()))+\" \";");
 	Z("  stats=stats+\"Skillpoints: \"+(xsArrayGetInt(skillpoints,trCurrentPlayer()))+\" \";");
 	Z("  stats=stats+padding+padding+padding+padding+\"_\"+padding;");
-	Z("  stats=stats+\"Str: 20, Dex:30, Int:25 \";");
+	Z("  stats=stats+\"Str: \"+xsArrayGetInt(str,trCurrentPlayer())+\", \";");
+	Z("  stats=stats+\"Dex:\"+xsArrayGetInt(dxt,trCurrentPlayer())+\", \";");
+	Z("  stats=stats+\"Int:\"+xsArrayGetInt(intel,trCurrentPlayer())+\" \";");
 	Z("  stats=stats+\"_\"+padding;");
 	Z("  if(xsArrayGetInt(y_item,trCurrentPlayer())!=0) {");
 	Z("   stats=stats+\"Inventory: \"+xsArrayGetInt(y_amount,trCurrentPlayer())+\" Ward\";");
