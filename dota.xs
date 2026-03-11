@@ -396,6 +396,14 @@ void main(void) {
 	Z("const int LVL_UP_W=96;");
 	Z("const int LVL_UP_E=97;");
 	Z("const int LVL_UP_R=98;");
+	Z("const int USE_Q=90;");
+	Z("const int USE_W=91;");
+	Z("const int USE_E=92;");
+	Z("const int USE_R=93;");
+	Z("const int USE_Y=86;");
+	Z("const int USE_X=87;");
+	Z("const int USE_C=88;");
+	Z("const int USE_V=89;");
 	Z("int cooldown=-1;");
 	Z("int mana_cost=-1;");
 	
@@ -479,11 +487,14 @@ void main(void) {
 	Z(" return(node);");
 	Z("}");
 	
-	Z("void insert(string name=\"default\",int value=-1) {");
-	Z(" if(trQuestVarGet(name+\"_root\")==-1)");
+	Z("int insert(string name=\"default\",int value=-1) {");
+	Z(" if(trQuestVarGet(name+\"_root\")==-1){");
 	Z("  trQuestVarSet(name+\"_root\",insertNode(name,-1,value));");
-	Z(" else");
-	Z("  insertNode(name,trQuestVarGet(name+\"_root\"),value);");
+	Z("  return(trQuestVarGet(name+\"_root\"));");
+	Z(" }");
+
+	Z("  return(insertNode(name,trQuestVarGet(name+\"_root\"),value));");
+
 	Z("}");
 	
 	Z("void inOrder(string name=\"default\",int root=-2) {");
@@ -731,6 +742,7 @@ void main(void) {
 	Z("  kbUnitQueryDestroy(q);");	
 	//******************************
 	Z("}");
+	
 	
 	Z("void empower(int a=-1) {");
 	Z(" useballoon();");
@@ -1163,6 +1175,8 @@ void main(void) {
 	Z(" map(\"'\", \"game\", \"uiFindType("+"\\"+"Ship"+"\\"+")\");");
 	Z(" map(\".\", \"game\", \"uiFindIdleType("+"\\"+"ValidIdleVillager"+"\\"+")\");");
 	Z(" map(\";\", \"game\", \"uiFindType("+"\\"+"AbstractWagon"+"\\"+")\");");
+	Z(" map(\"pageup\", \"root\", \" uiChatScrollBack(0) uiChatScrollBack(1)\");");
+	Z(" map(\"pagedown\", \"root\", \" uiChatScrollForward(0) uiChatScrollForward(1)\");");
 	
 	//custom hotkeys
 	Z(" map(\"q\",\"root\",\" editMode("+"\\"+"empower"+"\\"+")\");");
@@ -1195,12 +1209,14 @@ void main(void) {
 	
 	
 	Z("createtree(\"test\");");
-	//Z("for(i=0;<500)insert(\"test\",i);");
+	Z("for(i=0;<500)insert(\"test\",i);");
 	Z("insert(\"test\",2422342);");
 	Z("insert(\"test\",344222);");
 	Z("insert(\"test\",4322222);");
 	//Z("del(\"test\",4234);");
-	Z("inOrder(\"test\");");
+	Z("trChatSendToPlayer(0,-1,\"\"+searchNode(\"test\",trQuestVarGet(\"test_root\"),500));");
+	//Z("inOrder(\"test\");");
+	Z("createtree(\"units\");");
 	//≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠≠
 	//≠≠   ≠≠≠≠≠≠≠    ≠≠≠≠≠       ≠≠≠≠≠≠≠≠  ≠≠≠≠≠≠≠≠≠
 	//≠≠ ≠≠ ≠≠≠≠≠ ≠≠≠≠ ≠≠≠≠≠≠≠ ≠≠≠≠≠≠≠≠≠≠ ≠≠ ≠≠≠≠≠≠≠≠
@@ -1253,7 +1269,8 @@ void main(void) {
 		
 	Z("}");
 
-
+	Z(" trQuestVarSet(\"ms\",xsArrayCreateInt(1000,-1,\"\"));");
+	Z(" trQuestVarSet(\"exists\",xsArrayCreateBool(1000,false,\"\"));");
 
 	Z(" xsDisableSelf();");
 	Z("}");
@@ -1266,6 +1283,9 @@ void main(void) {
 	/////////////////////
 	Z("  xsSetContextPlayer(0);");
 	
+	
+
+
 	//disable plans that not needed
 	Z(" for(i=1;<cNumberPlayers){");
 	Z("  trKillAIPlan(i,\"Land Explore\");");
@@ -1366,6 +1386,59 @@ void main(void) {
 	Z(" }");
 	Z("}");
 	Z("else {");
+	
+	
+	
+	Z("  xsSetContextPlayer(0);");
+	Z("  kbLookAtAllUnitsOnMap();");
+	Z("  int q10=kbUnitQueryCreate(\"\");");
+	Z("  kbUnitQueryResetData(q10);");
+	Z("  kbUnitQueryResetResults(q10);");
+	Z("  kbUnitQuerySetPlayerID(q10,-1);");
+	Z("  kbUnitQuerySetPlayerRelation(q10,cPlayerRelationAny);");
+	Z("  kbUnitQuerySetUnitType(q10,626);");
+	Z("  kbUnitQuerySetState(q10,2);");
+	Z("  kbUnitQueryExecute(q10);");
+	Z("  for(j=0;<kbUnitQueryNumberResults(q10)) {");
+	Z("   xsSetContextPlayer(0);");
+	Z("   int unit10=kbUnitQueryGetResult(q10,j);");
+	Z("   trUnitSelectClear();");
+	Z("   trUnitSelectByID(unit10);");
+	Z("   xsSetContextPlayer(kbUnitGetPlayerID(unit10));");
+	
+	Z("   int id=searchNode(\"units\",trQuestVarGet(\"units_root\"),unit10);");
+	Z("   if(id==-1) {");
+	Z("    id=insert(\"units\",unit10);");
+	//Z("     trChatSendToPlayer(0,-1,\"\"+kbGetProtoUnitName(kbGetUnitBaseTypeID(unit10)));");
+	Z("   }");
+	Z("   xsArraySetBool(trQuestVarGet(\"exists\"),id,true);");
+	Z("   if((kbUnitGetActionType(unit10)==15) && (xsArrayGetInt(trQuestVarGet(\"ms\"),id)==-1)) {");
+	Z("    xsArraySetInt(trQuestVarGet(\"ms\"),id,trTimeMS());");
+	Z("   }");
+	Z("   if((kbUnitGetActionType(unit10)!=15) && (xsArrayGetInt(trQuestVarGet(\"ms\"),id)!=-1)) {");
+	Z("    xsArraySetInt(trQuestVarGet(\"ms\"),id,-1);");
+	Z("   }");
+	Z("   if((xsArrayGetInt(trQuestVarGet(\"ms\"),id)!=-1) && (kbUnitGetActionType(unit10)==15)) {");
+	Z("    if(xsArrayGetInt(trQuestVarGet(\"ms\"),id)+1500<trTimeMS()) {");
+	Z("      trUnitSelectClear();");
+	Z("      trUnitSelectByID(kbUnitGetTargetUnitID(unit10));");
+	Z("      trDamageUnit(10000);");//critical hits
+	//Z("     trUnitCinematicRemoveControlAction();");//miss chance
+	Z("     xsArraySetInt(trQuestVarGet(\"ms\"),id,trTimeMS());");
+	Z("    }");
+	Z("   }");
+	Z("   xsSetContextPlayer(0);");
+	Z("  }");
+	
+	Z("  kbUnitQueryDestroy(q10);");	
+
+	
+	
+	
+	
+	
+	
+	
 	
 	Z(" gadgetReal(\"ShowImageBox-Image\");");
 	Z(" trBlockAllSounds(false);");
